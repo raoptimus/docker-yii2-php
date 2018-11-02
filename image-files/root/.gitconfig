@@ -1,0 +1,29 @@
+[alias]
+change-commits = "!f() { VAR=$1; OLD=$2; NEW=$3; shift 3; git filter-branch --env-filter \"if [[ \\\"$`echo $VAR`\\\" = '$OLD' ]]; then export $VAR='$NEW'; fi\" $@; }; f "
+hist = log --pretty=format:\"%h %ad | %s%d [%an]\" --graph --date=short -n 20
+co = checkout
+ci = commit
+rci = submodule foreach commit 
+all-push = push --tags --recurse-submodules=on-demand
+rup = submodule update --remote
+up = pull --rebase
+st = status
+all-checkout = "!sh -c 'git submodule foreach git checkout $0 && git checkout $0'"
+create-branch = "!sh -c 'git submodule foreach git checkout -b $0 && git checkout -b $0'"
+develop-to-master = "!sh -c 'git all-checkout master && git submodule foreach git merge develop && git merge develop'"
+
+[push]
+        default = simple
+[color]
+        ui = auto
+        branch = auto
+        diff = auto
+        status = auto
+
+[filter "media"]
+	clean = git-media-clean %f
+	smudge = git-media-smudge %f
+	
+[core]
+	editor = nano
+	autocrlf = input

@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -e
+
+DOCKER_ID_USER=raoptimus
+DOCKER_IMAGE=yii2-php
+
+docker build -f ./Dockerfile -t ${DOCKER_ID_USER}/${DOCKER_IMAGE}:latest ./
+docker build -f ./xdebug/Dockerfile -t ${DOCKER_ID_USER}/${DOCKER_IMAGE}:xdebug ./
+
+
+docker push ${DOCKER_ID_USER}/${DOCKER_IMAGE}:latest
+docker push ${DOCKER_ID_USER}/${DOCKER_IMAGE}:xdebug
