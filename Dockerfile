@@ -29,6 +29,7 @@ RUN apt-get update && \
         zlib1g-dev \
         openssh-client \
         libgeoip-dev \
+        libmemcached-dev \
         nano \
         unzip \
         wget \
@@ -53,7 +54,8 @@ RUN docker-php-ext-configure gd \
         mbstring \
         opcache \
         pcntl \
-        pdo_pgsql
+        pdo_pgsql \
+        pdo_mysql
 
 # Install PECL extensions
 # see http://stackoverflow.com/a/8154466/291573) for usage of `printf`
@@ -61,24 +63,33 @@ RUN printf "\n" | pecl install \
         imagick \
         igbinary \
         geoip-1.1.1 \
-        redis \
-        docker-php-ext-enable \
+        protobuf-3.6.1 \
+        memcached-3.1.3 \
+        && docker-php-ext-enable \
+        igbinary \
         imagick \
-        geoip-1.1.1 \
-        redis
+        geoip \
+        protobuf \
+        memcached
 
-# Check if Xdebug extension need to be compiled. Default is enabled
-ARG PHP_ENABLE_XDEBUG
-RUN if [ 0 -ne "${PHP_ENABLE_XDEBUG:-0}" ] ; then cd /tmp && \
+# install php-redis with igbinary
+RUN pecl install --onlyreqdeps --nobuild redis && \
+        cd "$(pecl config-get temp_dir)/redis" && \
+        phpize && \
+        ./configure --enable-redis-igbinary && \
+        make && make install && \
+        docker-php-ext-enable redis && \
+        cd -
+
+RUN cd /tmp && \
         git clone git://github.com/xdebug/xdebug.git && \
         cd xdebug && \
-        git checkout 52adff7539109db592d07d3f6c325f6ee2a7669f && \
+        # git checkout 52adff7539109db592d07d3f6c325f6ee2a7669f && \
         phpize && \
         ./configure --enable-xdebug && \
         make && \
         make install && \
-        rm -rf /tmp/xdebug \
-        ; fi
+        rm -rf /tmp/xdebug 
 
 # Environment settings
 ENV PHP_USER_ID=33 \
@@ -109,7 +120,7 @@ RUN curl -sS https://getcomposer.org/installer | php -- \
         composer clear-cache
 
 # Install composer plugins
-RUN composer global require --optimize-autoloader \
+RUN composer global require --optimize-autoloader --no-plugins --no-scripts \
         "fxp/composer-asset-plugin:${VERSION_COMPOSER_ASSET_PLUGIN}" \
         "hirak/prestissimo:${VERSION_PRESTISSIMO_PLUGIN}" && \
         composer global dumpautoload --optimize && \
